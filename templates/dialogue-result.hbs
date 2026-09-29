@@ -1,0 +1,40 @@
+{{!--
+  KiteFrost - NPC Dialogue Chat Message Template
+  Rendered by ChatMessage.create() when the Quick Dialogue endpoint returns.
+
+  Context:
+    dialogue         {string}   - NPC's spoken words
+    mood             {string}   - NPC's emotional state
+    stage_direction  {string}   - Behavioural description for the GM
+    suggested_actions {string[]} - Follow-up action hints
+    npc_name         {string}   - Display name of the NPC
+--}}
+<div class="kitefrost dialogue-result">
+  {{#if stage_direction}}
+  <p class="stage-direction"><em>{{stage_direction}}</em></p>
+  {{/if}}
+
+  <p class="dialogue-text">{{dialogue}}</p>
+
+  <p class="mood-tag"><small>Mood: <strong>{{mood}}</strong></small></p>
+
+  {{#if suggested_actions.length}}
+  <div class="suggested-actions">
+    <p><small><strong>Suggested follow-ups:</strong></small></p>
+    <ul>
+      {{#each suggested_actions}}
+      <li><small>{{this}}</small></li>
+      {{/each}}
+    </ul>
+  </div>
+  {{/if}}
+
+  <div class="report-issue" style="margin-top: 6px; text-align: right;">
+    <button type="button" class="kitefrost-report-issue" data-npc-name="{{npc_name}}"
+            data-dialogue="{{dialogue}}" data-mood="{{mood}}"
+            style="font-size: 0.75em; opacity: 0.7; cursor: pointer;"
+            title="Report an issue with this dialogue">
+      <i class="fas fa-flag"></i> Report Issue
+    </button>
+  </div>
+</div>

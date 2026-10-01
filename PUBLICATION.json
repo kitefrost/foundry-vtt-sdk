@@ -1,6 +1,6 @@
 {
   "published": false,
-  "reason": "The advertised manifest URL 404s (no GitLab release was ever cut) AND the module's default apiBase https://api.kitefrost.ai is unreachable, so a published module would fail for every installer on first use.",
+  "reason": "No stable GitHub release has been cut (testers use the testing channel, github.com/kitefrost/foundry-vtt-sdk-testing) AND the module's default apiBase https://api.kitefrost.ai is unreachable, so a published module would fail for every installer on first use.",
   "precondition": "production serves https://api.kitefrost.ai - see DR-R3 in docs/design/concepts/foundry-vtt-live-module/design.md",
   "blocked_by": "FND-20260922-6A1",
   "verified_on": "2026-09-22",

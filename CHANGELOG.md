@@ -76,5 +76,5 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Personality Flags** - GMs can store persistent NPC personality data via
   `actor.setFlag("kitefrost", "personality", { ... })`.
 
-[1.0.0]: https://gitlab.com/kitefrost/foundry-vtt-sdk/-/tags/v1.0.0
-[0.1.0]: https://gitlab.com/kitefrost/foundry-vtt-sdk/-/tags/v0.1.0
+[1.0.0]: https://github.com/kitefrost/foundry-vtt-sdk/releases/tag/v1.0.0
+[0.1.0]: https://github.com/kitefrost/foundry-vtt-sdk/releases/tag/v0.1.0

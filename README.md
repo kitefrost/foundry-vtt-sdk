@@ -2,7 +2,7 @@
 
 > **NOT PUBLISHED YET - the install instructions below do not work today.**
 >
-> The manifest URL 404s (no release has been cut into the GitLab project), and the
+> The manifest URL 404s (no stable release has been cut into the GitHub repo; testers use the testing channel), and the
 > module's default API base `https://api.kitefrost.ai` is unreachable while
 > production is down. Installing today fails twice over.
 >
@@ -30,12 +30,12 @@ powered by the KiteFrost API.
 1. Open Foundry VTT → **Add-on Modules** → **Install Module**
 2. Paste the manifest URL:
    ```
-   https://gitlab.com/kitefrost/foundry-vtt-sdk/-/releases/permalink/latest/downloads/module.json
+   https://github.com/kitefrost/foundry-vtt-sdk/releases/latest/download/module.json
    ```
 
    **Alpha/beta testers**: install the testing channel instead - a separate
    project that carries only unstable builds:
-   `https://gitlab.com/kitefrost/foundry-vtt-sdk-testing/-/releases/permalink/latest/downloads/module.json`.
+   `https://github.com/kitefrost/foundry-vtt-sdk-testing/releases/latest/download/module.json`.
    Testing builds are numbered above every stable patch (e.g. `1.1.100`), so you
    are never downgraded; reinstall from the stable URL to return to stable.
    Then set **Module Settings -> KiteFrost -> API URL** to the API address in your
@@ -45,7 +45,7 @@ powered by the KiteFrost API.
 ### Method 2: Manual
 
 1. Download `kitefrost.zip` from the
-   [releases page](https://gitlab.com/kitefrost/foundry-vtt-sdk/-/releases)
+   [releases page](https://github.com/kitefrost/foundry-vtt-sdk/releases)
 2. Extract to `<foundry-data>/modules/kitefrost/`
 3. Restart Foundry VTT
 

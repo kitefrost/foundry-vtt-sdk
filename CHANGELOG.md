@@ -7,6 +7,15 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.1.105] - 2026-10-02 (testing channel)
+
+### Added
+
+- **Connect with a code** (Game Settings -> KiteFrost): type the one-time code
+  from the dashboard's API Keys page -> Connect Foundry VTT. The module receives
+  its own key limited to NPC dialogue for that campaign and fills the API Key and
+  Project ID settings itself. The manual settings stay for module and macro authors.
+
 ## [1.1.103] - 2026-09-26 (testing channel)
 
 ### Added

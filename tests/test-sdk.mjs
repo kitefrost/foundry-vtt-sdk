@@ -29,6 +29,9 @@ globalThis.game = {
     set: (moduleId, key, value) => {
       _settingsStore[`${moduleId}.${key}`] = value;
     },
+    registerMenu: (moduleId, key, options) => {
+      _settingsStore[`menu:${moduleId}.${key}`] = options;
+    },
   },
   system: { id: "dnd5e" },
   user: { isGM: true },
@@ -1201,6 +1204,65 @@ await test("api: fallback chat HTML escapes model output (R12)", async () => {
     ChatMessage.create = origCreate;
   }
 });
+
+// ---------------------------------------------------------------------------
+// Foundry Connect (foundry-connect-pairing D8)
+// ---------------------------------------------------------------------------
+
+{
+  const { claimPairingCode, ConnectMenu } = await import(join(sdkRoot, "scripts/connect.mjs"));
+  const { registerSettings: reg } = await import(join(sdkRoot, "scripts/settings.mjs"));
+
+  await test("registerSettings registers the Connect menu", () => {
+    reg();
+    const menu = _settingsStore["menu:kitefrost.connect"];
+    assert.ok(menu, "connect menu not registered");
+    assert.strictEqual(menu.type, ConnectMenu);
+    assert.strictEqual(menu.restricted, true);
+  });
+
+  await test("claimPairingCode posts the code and saves key + project", async () => {
+    game.settings.set("kitefrost", "apiUrl", "https://api.example.test/");
+    game.settings.set("kitefrost", "apiKey", "");
+    game.settings.set("kitefrost", "projectId", "");
+    let seen = null;
+    _fetchMock = async (url, opts) => {
+      seen = { url, opts };
+      return { ok: true, status: 200, json: async () => ({ api_key: "sk_ab_cd", project_id: "p-1", key_prefix: "sk_ab", scopes: [] }) };
+    };
+    try {
+      const out = await claimPairingCode("  k7qm-x2pd ");
+      assert.strictEqual(seen.url, "https://api.example.test/v1/foundry/pair");
+      assert.strictEqual(JSON.parse(seen.opts.body).code, "k7qm-x2pd");
+      assert.ok(!("Authorization" in seen.opts.headers));
+      assert.strictEqual(game.settings.get("kitefrost", "apiKey"), "sk_ab_cd");
+      assert.strictEqual(game.settings.get("kitefrost", "projectId"), "p-1");
+      assert.deepStrictEqual(out, { projectId: "p-1", keyPrefix: "sk_ab" });
+    } finally {
+      _fetchMock = null;
+    }
+  });
+
+  await test("claimPairingCode explains an expired code and keeps old settings", async () => {
+    game.settings.set("kitefrost", "apiKey", "sk_old");
+    _fetchMock = async () => ({ ok: false, status: 404, json: async () => ({}) });
+    try {
+      await assert.rejects(() => claimPairingCode("AAAA-BBBB"), /wrong or has expired/);
+      assert.strictEqual(game.settings.get("kitefrost", "apiKey"), "sk_old");
+    } finally {
+      _fetchMock = null;
+    }
+  });
+
+  await test("claimPairingCode rejects an empty code without calling the API", async () => {
+    _fetchMock = async () => { throw new Error("must not be called"); };
+    try {
+      await assert.rejects(() => claimPairingCode("   "), /Enter the code/);
+    } finally {
+      _fetchMock = null;
+    }
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Summary

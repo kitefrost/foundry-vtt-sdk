@@ -7,7 +7,10 @@
  *   - apiKey:   Bearer token (publishable key, pk_...)
  *   - projectId: The project ID to use for all calls
  *   - defaultTone: Default NPC dialogue tone
+ *   - connect (menu): pair with a one-time code; fills apiKey + projectId
  */
+
+import { ConnectMenu } from "./connect.mjs";
 
 export const MODULE_ID = "kitefrost";
 
@@ -16,6 +19,17 @@ export const MODULE_ID = "kitefrost";
  * Called once from main.mjs Hooks.on("init", ...).
  */
 export function registerSettings() {
+  // Foundry Connect (D8): the no-code path. The three fields below stay for
+  // module and macro authors who prefer to paste a key by hand.
+  game.settings.registerMenu(MODULE_ID, "connect", {
+    name: "Connect to KiteFrost",
+    label: "Connect with a code",
+    hint: "Easiest setup: click Connect Foundry VTT in the KiteFrost dashboard and type the code here.",
+    icon: "fas fa-link",
+    type: ConnectMenu,
+    restricted: true,
+  });
+
   game.settings.register(MODULE_ID, "apiUrl", {
     name: "API URL",
     hint: "Base URL of the KiteFrost API (e.g. https://api.kitefrost.ai).",

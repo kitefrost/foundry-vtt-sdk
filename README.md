@@ -130,6 +130,30 @@ Hooks.on("kitefrost.dialogueGenerated", ({ actor, result, message }) => { /* ...
 Every call **rejects** on a problem (missing settings, missing `playerMessage`,
 an invalid key, a network error), so wrap it in `try { ... } catch (e) { ... }`.
 
+## Note Flags (for your own notes tool)
+
+If you write your notes in another app and copy them into journal pages, the module can
+keep a few small facts on each page that your tool can read back. The page text is never
+sent back: your notes app stays the master copy.
+
+| Flag | Value |
+|---|---|
+| `note_state` | `idea`, `planned`, `true` or `secret` |
+| `in_world_date` | `{ label: "Day 3 of Harvest", sort_key: 3 }` - your own label, and a number or text to sort by |
+| `shown_to_players_at` | when the page was shown to players (history only) |
+| `content_hash` | a fingerprint of the page as Foundry stored it, to spot edits made in Foundry |
+
+Right-click a journal entry for **KiteFrost: Mark Shown To Players** and **KiteFrost: Export
+Note Flags** (downloads every flagged page as JSON). From code:
+
+```js
+const kf = game.modules.get("kitefrost").api;
+await kf.noteFlags.write(page, { note_state: "planned", in_world_date: { label: "Day 3", sort_key: 3 } });
+await kf.noteFlags.stampContent(page);          // after your tool writes the page
+if (kf.noteFlags.editedSinceStamp(page)) { /* ask before overwriting */ }
+const all = kf.noteFlags.collect();             // every flagged page, sorted by in-world date
+```
+
 ## Troubleshooting
 
 **"AI: Generate Dialogue" does not appear in the context menu**

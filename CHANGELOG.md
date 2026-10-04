@@ -7,6 +7,16 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [Unreleased]
+
+## [1.1.106] - 2026-10-04 (testing channel)
+
+### Added
+- Note flags on journal pages: `note_state`, `in_world_date`, `shown_to_players_at` and a
+  content fingerprint, for GMs who keep their notes in another app. New `api.noteFlags`
+  (read, write, markShown, stampContent, editedSinceStamp, collect) and two journal
+  right-click entries: Mark Shown To Players, Export Note Flags.
+
 ## [1.1.105] - 2026-10-02 (testing channel)
 
 ### Added

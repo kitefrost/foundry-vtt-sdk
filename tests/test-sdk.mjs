@@ -1265,6 +1265,80 @@ await test("api: fallback chat HTML escapes model output (R12)", async () => {
 }
 
 // ---------------------------------------------------------------------------
+// Note flags (gm-vault-foundry-sync D1-D4)
+// ---------------------------------------------------------------------------
+{
+  const nf = await import(join(sdkRoot, "scripts/note-flags.mjs"));
+
+  function fakePage(name, content, flags = {}) {
+    const store = { ...flags };
+    return {
+      id: `id-${name}`,
+      name,
+      text: { content },
+      getFlag: (_m, k) => store[k],
+      setFlag: async (_m, k, v) => { store[k] = v; },
+      unsetFlag: async (_m, k) => { delete store[k]; },
+    };
+  }
+
+  await test("contentFingerprint is stable and changes with the text", () => {
+    assert.strictEqual(nf.contentFingerprint("abc"), nf.contentFingerprint("abc"));
+    assert.notStrictEqual(nf.contentFingerprint("abc"), nf.contentFingerprint("abd"));
+    assert.match(nf.contentFingerprint(""), /^[0-9a-f]{8}$/);
+  });
+
+  await test("normaliseFlags validates note_state and the in-world date shape", () => {
+    assert.deepStrictEqual(nf.normaliseFlags({ note_state: " Secret " }), { note_state: "secret" });
+    assert.throws(() => nf.normaliseFlags({ note_state: "maybe" }), /note_state must be one of/);
+    assert.throws(() => nf.normaliseFlags({ colour: "red" }), /Unknown note flag/);
+    assert.throws(() => nf.normaliseFlags({ in_world_date: { label: "Day 3" } }), /sort_key/);
+    assert.deepStrictEqual(nf.normaliseFlags({ in_world_date: { label: "Day 3", sort_key: 3 } }), {
+      in_world_date: { label: "Day 3", sort_key: 3 },
+    });
+  });
+
+  await test("markShown records history and leaves note_state alone (D2)", async () => {
+    const p = fakePage("Ball", "<p>x</p>", { note_state: "secret" });
+    const flags = await nf.markShown(p, new Date("2026-10-04T10:00:00Z"));
+    assert.strictEqual(flags.shown_to_players_at, "2026-10-04T10:00:00.000Z");
+    assert.strictEqual(flags.note_state, "secret");
+  });
+
+  await test("stampContent + editedSinceStamp detect an edit made in Foundry (D3)", async () => {
+    const p = fakePage("Mill", "<p>stored by Foundry</p>");
+    assert.strictEqual(nf.editedSinceStamp(p), false, "no stamp yet = not edited");
+    await nf.stampContent(p);
+    assert.strictEqual(nf.editedSinceStamp(p), false);
+    p.text.content = "<p>changed at the table</p>";
+    assert.strictEqual(nf.editedSinceStamp(p), true);
+  });
+
+  await test("collectFlags lists only flagged pages, sorted by in-world sort key", () => {
+    const journals = [
+      { name: "Plot", pages: [
+        fakePage("Later", "a", { in_world_date: { label: "Day 10", sort_key: 10 } }),
+        fakePage("Plain", "b"),
+        fakePage("Undated", "c", { note_state: "planned" }),
+        fakePage("Sooner", "d", { in_world_date: { label: "Day 2", sort_key: 2 } }),
+      ] },
+    ];
+    const rows = nf.collectFlags(journals);
+    assert.deepStrictEqual(rows.map((r) => r.page), ["Sooner", "Later", "Undated"]);
+    assert.strictEqual(rows[0].journal, "Plot");
+    assert.strictEqual(rows[0].edited_in_foundry, false);
+  });
+
+  await test("public API exposes noteFlags", async () => {
+    const { buildApi } = await import(join(sdkRoot, "scripts/api.mjs"));
+    const api = buildApi("test");
+    for (const k of ["read", "write", "markShown", "stampContent", "editedSinceStamp", "collect"]) {
+      assert.strictEqual(typeof api.noteFlags[k], "function", k);
+    }
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Summary
 // ---------------------------------------------------------------------------
 

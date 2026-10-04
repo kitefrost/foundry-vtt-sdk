@@ -14,6 +14,7 @@
 
 import { reportIssue as postReport } from "./api-client.mjs";
 import { extractActorContext, runDialogue } from "./npc-dialogue.mjs";
+import { collectFlags, editedSinceStamp, markShown, readFlags, stampContent, writeFlags } from "./note-flags.mjs";
 
 function _resolveActor(actorOrId) {
   if (typeof actorOrId === "string") {
@@ -27,6 +28,19 @@ function _resolveActor(actorOrId) {
 export function buildApi(version) {
   return Object.freeze({
     version,
+    /**
+     * Note flags on journal pages (gm-vault-foundry-sync): small facts the GM's own vault
+     * tool can read back. The page TEXT is never synced back - the vault is the master copy.
+     */
+    noteFlags: Object.freeze({
+      read: (page) => readFlags(page),
+      write: async (page, patch) => writeFlags(page, patch),
+      markShown: async (page) => markShown(page),
+      stampContent: async (page) => stampContent(page),
+      editedSinceStamp: (page) => editedSinceStamp(page),
+      /** All flagged pages in the world, sorted by in-world date. */
+      collect: () => collectFlags(game.journal?.contents ?? []),
+    }),
     /** Generate NPC dialogue without a dialog. See design R10 for the result shape. */
     generateDialogue: async (actor, options = {}) => runDialogue(_resolveActor(actor), options),
     /** The exact {npc_name, npc_context} the API is sent for this actor. */

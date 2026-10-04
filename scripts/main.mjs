@@ -9,6 +9,7 @@
  *   - ready:                   Log startup info
  *   - getActorContextOptions:  Add "AI: Generate Dialogue" to Actor context menu (v13+)
  *   - getActorDirectoryEntryContext: Legacy hook for v12 compatibility
+ *   - getJournalEntryContextOptions: note flags (mark shown, export) - gm-vault-foundry-sync
  *
  * @module main
  */
@@ -16,6 +17,7 @@
 import { buildApi } from "./api.mjs";
 import { registerSettings, MODULE_ID } from "./settings.mjs";
 import { generateNpcDialogue, registerReportIssueHandler } from "./npc-dialogue.mjs";
+import { collectFlags, markShown } from "./note-flags.mjs";
 
 // ---------------------------------------------------------------------------
 // init - settings registration
@@ -128,4 +130,49 @@ Hooks.on("getActorDirectoryEntryContext", (html, options) => {
       await generateNpcDialogue(actor);
     },
   });
+});
+
+// ---------------------------------------------------------------------------
+// getJournalEntryContextOptions - note flags (gm-vault-foundry-sync)
+// ---------------------------------------------------------------------------
+
+/**
+ * Journal right-click entries (GM only, no API key needed - flags stay in this world):
+ *   - "KiteFrost: Mark Shown To Players" stamps shown_to_players_at on every page of the
+ *     entry (presentation history; never changes note_state - D2).
+ *   - "KiteFrost: Export Note Flags" downloads every flagged page in the world as JSON for
+ *     the GM's own vault tool to read back (D4). The text itself is never exported back.
+ */
+Hooks.on("getJournalEntryContextOptions", (_app, options) => {
+  if (!game.user?.isGM) return;
+  const entryFrom = (li) => {
+    const el = li instanceof HTMLElement ? li : li?.[0];
+    const id = el?.dataset?.entryId ?? el?.closest?.("[data-entry-id]")?.dataset?.entryId;
+    return id ? game.journal.get(id) : null;
+  };
+  const markShownClick = async (_event, li) => {
+    const entry = entryFrom(li);
+    if (!entry) return;
+    for (const page of entry.pages ?? []) await markShown(page);
+    ui.notifications.info(`[KiteFrost] Marked "${entry.name}" as shown to players.`);
+  };
+  const exportClick = async () => {
+    const rows = collectFlags(game.journal?.contents ?? []);
+    const data = JSON.stringify({ exported_at: new Date().toISOString(), pages: rows }, null, 2);
+    saveDataToFile(data, "application/json", "kitefrost-note-flags.json");
+    ui.notifications.info(`[KiteFrost] Exported flags for ${rows.length} page(s).`);
+  };
+  const isV14 = Number(game.release?.generation ?? 0) >= 14;
+  const always = () => true;
+  const entries = [
+    ["KiteFrost: Mark Shown To Players", "fas fa-eye", markShownClick],
+    ["KiteFrost: Export Note Flags", "fas fa-file-export", exportClick],
+  ];
+  for (const [label, icon, onClick] of entries) {
+    options.push(
+      isV14
+        ? { label, icon: `<i class="${icon}"></i>`, visible: always, onClick }
+        : { name: label, icon: `<i class="${icon}"></i>`, condition: always, callback: (li) => onClick(null, li) },
+    );
+  }
 });

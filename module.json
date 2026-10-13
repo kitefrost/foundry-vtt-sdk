@@ -2,7 +2,7 @@
   "id": "kitefrost",
   "title": "KiteFrost",
   "description": "Real-time NPC dialogue generation for TTRPG GMs. Connects Foundry VTT to the KiteFrost TTRPG GM pack. Right-click any Actor to generate in-character dialogue with mood and stage directions.",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "compatibility": {
     "minimum": "13",
     "verified": "14"
@@ -22,7 +22,7 @@
   "flags": {},
   "url": "https://github.com/kitefrost/foundry-vtt-sdk",
   "manifest": "https://github.com/kitefrost/foundry-vtt-sdk/releases/latest/download/module.json",
-  "download": "https://github.com/kitefrost/foundry-vtt-sdk/releases/download/v1.1.0/kitefrost.zip",
+  "download": "https://github.com/kitefrost/foundry-vtt-sdk/releases/download/v1.2.0/kitefrost.zip",
   "license": "MIT",
   "readme": "README.md",
   "changelog": "CHANGELOG.md",

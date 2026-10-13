@@ -14,6 +14,7 @@
 
 import { reportIssue as postReport } from "./api-client.mjs";
 import { extractActorContext, runDialogue } from "./npc-dialogue.mjs";
+import { checkNotes, sessionBrief } from "./notes.mjs";
 import { collectFlags, editedSinceStamp, markShown, readFlags, stampContent, writeFlags } from "./note-flags.mjs";
 
 function _resolveActor(actorOrId) {
@@ -40,6 +41,15 @@ export function buildApi(version) {
       editedSinceStamp: (page) => editedSinceStamp(page),
       /** All flagged pages in the world, sorted by in-world date. */
       collect: () => collectFlags(game.journal?.contents ?? []),
+    }),
+    /**
+     * Notes check + session brief over the world's journal (pack-audience DECISION 1a).
+     * Options: {journals?: JournalEntry[] (default: all), ignoreFolders?: string[]}.
+     * Resolve the raw API response plus `pages_not_sent`; `brief` rejects with 402 on Free.
+     */
+    notes: Object.freeze({
+      check: async (options) => checkNotes(options),
+      brief: async (options) => sessionBrief(options),
     }),
     /** Generate NPC dialogue without a dialog. See design R10 for the result shape. */
     generateDialogue: async (actor, options = {}) => runDialogue(_resolveActor(actor), options),

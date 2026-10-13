@@ -1,25 +1,32 @@
 # KiteFrost - Foundry VTT Module
 
-> **NOT PUBLISHED YET - the install instructions below do not work today.**
+> **NOT PUBLISHED YET - the stable install below is being verified.**
 >
-> The manifest URL 404s (no stable release has been cut into the GitHub repo; testers use the testing channel), and the
-> module's default API base `https://api.kitefrost.ai` is unreachable while
-> production is down. Installing today fails twice over.
+> The stable channel is released first and marked published only after that release has
+> been installed from the manifest URL into a live Foundry and passed our end-to-end tests
+> (`scripts/foundry-mark-published.sh`). Until then, alpha testers install the testing
+> channel (below).
 >
-> Machine-readable state: `PUBLICATION.json`. Rationale and the condition for
-> publishing: DR-R3 in
+> Machine-readable state: `PUBLICATION.json`. Rationale: DR-R3 and R-NB in
 > `docs/design/concepts/foundry-vtt-live-module/design.md` (`FND-20260922-6A1`).
->
-> **Alpha testers**: use the Foundry VTT **JSON import/export** path instead - that
-> is implemented and works. See `docs/design/alpha-reply-playbook.md` §B1.
 
 Real-time NPC dialogue generation for TTRPG GMs. Right-click any Actor in the
 Actor Directory to generate in-character dialogue with mood and stage directions,
 powered by the KiteFrost API.
 
+It also reads your journal before a session (GM only, buttons at the top of the
+Journal sidebar):
+
+- **Check Notes** - where your notes disagree with your quest and NPC records, or with
+  each other, with the line it found and the edit to make.
+- **Session Brief** (Pro) - story so far, open threads, what characters want, what is
+  coming up, and which secrets are still unrevealed (names only).
+
+Results open in a dialog only you see. Nothing is posted to chat or saved.
+
 ## Requirements
 
-- Foundry VTT v12+
+- Foundry VTT v13+ (verified on v14)
 - D&D 5e game system (other systems fall back to generic extraction)
 - A [KiteFrost](https://kitefrost.ai) account with a project and API key
 

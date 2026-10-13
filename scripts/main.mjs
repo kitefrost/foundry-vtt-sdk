@@ -18,6 +18,7 @@ import { buildApi } from "./api.mjs";
 import { registerSettings, MODULE_ID } from "./settings.mjs";
 import { generateNpcDialogue, registerReportIssueHandler } from "./npc-dialogue.mjs";
 import { collectFlags, markShown } from "./note-flags.mjs";
+import { runCheckNotesUi, runSessionBriefUi } from "./notes.mjs";
 
 // ---------------------------------------------------------------------------
 // init - settings registration
@@ -174,5 +175,36 @@ Hooks.on("getJournalEntryContextOptions", (_app, options) => {
         ? { label, icon: `<i class="${icon}"></i>`, visible: always, onClick }
         : { name: label, icon: `<i class="${icon}"></i>`, condition: always, callback: (li) => onClick(null, li) },
     );
+  }
+});
+
+// ---------------------------------------------------------------------------
+// renderJournalDirectory - "Check Notes" + "Session Brief" (pack-audience DECISION 1a)
+// ---------------------------------------------------------------------------
+
+/**
+ * Two GM-only buttons in the Journal sidebar header. Both send the world's journal text
+ * pages to the API (notes.mjs) and show the result in a dialog only the GM sees. Hidden
+ * until an API key and project are set. v13+ passes an HTMLElement; jQuery is unwrapped.
+ */
+Hooks.on("renderJournalDirectory", (_app, html) => {
+  if (!game.user?.isGM) return;
+  if (!(game.settings.get(MODULE_ID, "apiKey") && game.settings.get(MODULE_ID, "projectId"))) return;
+  const root = html instanceof HTMLElement ? html : html?.[0];
+  const bar = root?.querySelector?.(".header-actions") ?? root?.querySelector?.(".directory-header");
+  if (!bar || bar.querySelector(".kitefrost-notes")) return;
+  for (const [label, icon, onClick] of [
+    ["Check Notes", "fas fa-spell-check", runCheckNotesUi],
+    ["Session Brief", "fas fa-scroll", runSessionBriefUi],
+  ]) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "kitefrost-notes";
+    button.innerHTML = `<i class="${icon}"></i> ${label}`;
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      onClick();
+    });
+    bar.append(button);
   }
 });

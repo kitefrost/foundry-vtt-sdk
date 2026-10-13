@@ -1401,6 +1401,101 @@ await test("api: fallback chat HTML escapes model output (R12)", async () => {
 }
 
 // ---------------------------------------------------------------------------
+// Notes check + session brief (notes.mjs, pack-audience DECISION 1a)
+// ---------------------------------------------------------------------------
+
+{
+  const notes = await import(join(sdkRoot, "scripts", "notes.mjs"));
+  const page = (name, html, flags = {}, type = "text") => ({
+    name,
+    type,
+    text: { content: html },
+    getFlag: (_m, k) => flags[k],
+  });
+  const journal = (name, pages, folder = null) => ({ name, pages, folder });
+
+  await test("notes: journal HTML becomes readable text with headings and list items", () => {
+    const out = notes.htmlToText("<h2>Marta</h2><p>Innkeeper &amp; spy.</p><ul><li>alive</li></ul><script>x()</script>");
+    assert.strictEqual(out, "## Marta\nInnkeeper & spy.\n\n- alive");
+  });
+
+  await test("notes: a page's note_state flag becomes frontmatter; folders become the path", () => {
+    const n = notes.pageToNote(journal("NPCs", [], { name: "Plans", folder: { name: "Campaign" } }), page("Twist", "<p>The duke lies.</p>", { note_state: "secret" }));
+    assert.strictEqual(n.name, "Campaign/Plans/NPCs/Twist.md");
+    assert.ok(n.text.startsWith("---\nnote_state: secret\n---\n# Twist"), n.text);
+  });
+
+  await test("notes: image pages and empty pages are not sent; the 500-note cap is reported", () => {
+    const many = Array.from({ length: 502 }, (_, i) => page(`p${i}`, "<p>x</p>"));
+    const { notes: sent, skipped } = notes.collectNotes([journal("J", [page("img", "", {}, "image"), page("empty", ""), ...many])]);
+    assert.strictEqual(sent.length, 500);
+    assert.strictEqual(skipped, 2);
+  });
+
+  const realFetch = globalThis.fetch;
+  const calls = [];
+  game.settings.set(MODULE_ID, "apiUrl", "https://api.kitefrost.ai");
+  game.settings.set(MODULE_ID, "apiKey", "sk_test_notes");
+  game.settings.set(MODULE_ID, "projectId", "proj_n");
+
+  await test("notes: check posts the journal to check-notes with the bearer key", async () => {
+    globalThis.fetch = async (url, init) => {
+      calls.push({ url, init });
+      return { ok: true, json: async () => ({ evaluated: true, claims_found: 1, findings: [] }) };
+    };
+    const r = await notes.checkNotes({ journals: [journal("Log", [page("S1", "<p>Marta died.</p>")])], ignoreFolders: ["Plans"] });
+    const pid = "proj_n";
+    assert.strictEqual(calls[0].url, `https://api.kitefrost.ai/v1/projects/${pid}/ttrpg-gm/continuity/check-notes`);
+    assert.strictEqual(calls[0].init.headers.Authorization, "Bearer sk_test_notes");
+    const body = JSON.parse(calls[0].init.body);
+    assert.deepStrictEqual(body.ignore_folders, ["Plans"]);
+    assert.strictEqual(body.notes[0].name, "Log/S1.md");
+    assert.strictEqual(r.pages_not_sent, 0);
+  });
+
+  await test("notes: brief posts to notes/brief; a 403 tells the GM to connect again", async () => {
+    calls.length = 0;
+    globalThis.fetch = async (url) => {
+      calls.push({ url });
+      return { ok: false, status: 403, statusText: "Forbidden", json: async () => ({ detail: "missing scope notes:generate" }) };
+    };
+    await assert.rejects(
+      notes.sessionBrief({ journals: [journal("Log", [page("S1", "<p>x</p>")])] }),
+      (e) => e.message.includes("403") && e.message.includes("Connect with a code"),
+    );
+    assert.ok(calls[0].url.endsWith("/ttrpg-gm/notes/brief"));
+  });
+
+  await test("notes: an unsafe API URL is refused before the journal is sent", async () => {
+    calls.length = 0;
+    game.settings.set(MODULE_ID, "apiUrl", "http://api.kitefrost.ai");
+    await assert.rejects(notes.checkNotes({ journals: [journal("Log", [page("S1", "<p>x</p>")])] }), /https/);
+    assert.strictEqual(calls.length, 0);
+    game.settings.set(MODULE_ID, "apiUrl", "https://api.kitefrost.ai");
+  });
+
+  await test("notes: an empty journal is refused without a request", async () => {
+    await assert.rejects(notes.checkNotes({ journals: [] }), /No journal text pages/);
+  });
+
+  await test("notes: results escape server text (R12) and an unevaluated check never reads as clean", () => {
+    const html = notes.renderCheck({ evaluated: true, claims_found: 1, findings: [{ name: "<b>M</b>", message: "x", quote: "<img src=x onerror=1>" }] });
+    assert.ok(!html.includes("<img"), html);
+    assert.ok(notes.renderCheck({ evaluated: false }).includes("not</strong> a clean result"));
+    const brief = notes.renderBrief({ brief: { story_so_far: [{ text: "<script>", from: "S1.md" }], not_revealed_yet: ["Twist"] } });
+    assert.ok(!brief.includes("<script>") && brief.includes("Twist"), brief);
+  });
+
+  await test("api: notes.check and notes.brief are on the public module API", () => {
+    const api = buildApi("test");
+    assert.strictEqual(typeof api.notes.check, "function");
+    assert.strictEqual(typeof api.notes.brief, "function");
+  });
+
+  globalThis.fetch = realFetch;
+}
+
+// ---------------------------------------------------------------------------
 // Summary
 // ---------------------------------------------------------------------------
 

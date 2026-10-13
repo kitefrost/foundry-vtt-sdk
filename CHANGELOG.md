@@ -9,6 +9,23 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-13 (first stable release; testing channel gets the same code as 1.2.100)
+
+### Added
+- **Check Notes** and **Session Brief** buttons in the Journal sidebar (GM only, shown once an
+  API key and project are set). Both read the world's journal text pages:
+  - *Check Notes* lists where your notes disagree with your quest and NPC records, or with each
+    other, with the line it found and the edit to make.
+  - *Session Brief* builds a pre-session brief: story so far, open threads, what characters
+    want, what is coming up, and which secrets are still unrevealed (names only). Pro plan.
+  Results open in a dialog only you see; nothing is posted to chat and nothing is saved.
+  A page marked secret / idea / planned with the note flags is treated that way.
+- Scripting API: `game.modules.get("kitefrost").api.notes.check()` and `.notes.brief()`.
+
+### Changed
+- "Connect with a code" keys can now run the notes check and brief. A key connected before
+  this release gets a clear "connect again" message from those two buttons.
+
 ## [1.1.107] - 2026-10-13 (testing channel)
 
 ### Security

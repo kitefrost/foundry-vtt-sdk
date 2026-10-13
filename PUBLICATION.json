@@ -1,7 +1,7 @@
 {
   "published": false,
-  "reason": "No stable GitHub release has been cut (testers use the testing channel, github.com/kitefrost/foundry-vtt-sdk-testing). The default apiBase https://api.kitefrost.ai now resolves (TEMP alias of staging, 2026-10-12 - see foundry-vtt-live-module DR-R3 note); what remains is installing from the real stable manifest URL in a live Foundry v14.",
-  "precondition": "a stable release (scripts/foundry-release.sh stable <ver>) installs from the real manifest URL in a live Foundry v14 and pairs/generates via api.kitefrost.ai (tests/sdk_live/test_foundry_connect_in_browser_e2e.py)",
+  "reason": "Releasing is not publishing (2026-10-13). A stable release (scripts/foundry-release.sh stable) is cut once the default API host answers; this marker stays false until that release has been installed from the stable manifest into a live Foundry and passed the e2e suites.",
+  "precondition": "scripts/foundry-mark-published.sh succeeds: installs the stable manifest's download zip into a live Foundry v14 and passes the UI, scripting-API (incl. notes check) and pairing e2e suites, then writes published=true",
   "verified_on": "2026-10-12",
-  "note": "Flip `published` to true ONLY after installing from the real manifest URL in a live Foundry v14 instance (minimum supported: v13). A release existing is not the same as a module installing."
+  "note": "Only scripts/foundry-mark-published.sh flips `published`. A release existing is not the same as a module installing."
 }

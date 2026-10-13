@@ -159,3 +159,53 @@ export async function reportIssue(reportBody) {
 
   return /** @type {ReportIssueResponse} */ (await response.json());
 }
+
+/**
+ * POST a JSON body to `{apiUrl}` + `pathFor(projectId)` and return the parsed
+ * response - the notes check and session brief (notes.mjs). Same URL check and error
+ * shape as the calls above. A 403 here almost always means a key from before notes
+ * access was part of "Connect with a code", so the message says how to fix it.
+ *
+ * @param {(projectId: string) => string} pathFor - the full path, written out at the call site
+ *   (scripts/check-sdk-parity.py reads endpoint paths from the source, so no generic path)
+ * @param {Object} body
+ * @returns {Promise<Object>}
+ */
+export async function postProjectJson(pathFor, body) {
+  const apiUrl = getSetting("apiUrl")?.trim();
+  const apiKey = getSetting("apiKey")?.trim();
+  const projectId = getSetting("projectId")?.trim();
+
+  if (!apiUrl) throw new Error("[KiteFrost] API URL is not configured. Check Module Settings.");
+  if (!apiKey) throw new Error("[KiteFrost] API Key is not configured. Check Module Settings.");
+  if (!projectId) throw new Error("[KiteFrost] Project ID is not configured. Check Module Settings.");
+
+  const url = `${checkApiUrl(apiUrl)}${pathFor(projectId)}`;
+
+  let response;
+  try {
+    response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify(body),
+    });
+  } catch (networkErr) {
+    throw new Error(`[KiteFrost] Network error: ${networkErr.message}`);
+  }
+
+  if (!response.ok) {
+    let detail = response.statusText;
+    try {
+      const errorBody = await response.json();
+      detail = _detailText(errorBody.detail ?? errorBody.error) || detail;
+    } catch (_) {
+      // ignore JSON parse failure, use statusText
+    }
+    if (response.status === 403) {
+      detail += ' - this key cannot read notes. Use "Connect with a code" in Module Settings again to get one that can.';
+    }
+    throw new Error(`[KiteFrost] API error ${response.status}: ${detail}`);
+  }
+
+  return await response.json();
+}

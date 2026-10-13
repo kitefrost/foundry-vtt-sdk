@@ -4,7 +4,7 @@
  * Settings (scopes per D-R4.6; apiKey is client-scoped so it never leaves
  * the GM's browser, the rest are world-scoped):
  *   - apiUrl:   Base URL of the KiteFrost API
- *   - apiKey:   Bearer token (publishable key, pk_...)
+ *   - apiKey:   Bearer token (the sk_ key Connect-with-a-code mints, or one the GM pasted)
  *   - projectId: The project ID to use for all calls
  *   - defaultTone: Default NPC dialogue tone
  *   - connect (menu): pair with a one-time code; fills apiKey + projectId

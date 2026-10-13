@@ -9,6 +9,15 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.1.107] - 2026-10-13 (testing channel)
+
+### Security
+- The **API URL** setting is checked before anything is sent: it must be `https://`
+  (plain `http://` only for a local server) and may not contain a user name or password.
+  An unsafe address is refused with a clear message and your key is not sent. An address
+  outside kitefrost.ai still works but shows a one-time warning naming the server your
+  key goes to. Applies to Connect with a code, NPC dialogue and issue reports.
+
 ## [1.1.106] - 2026-10-04 (testing channel)
 
 ### Added

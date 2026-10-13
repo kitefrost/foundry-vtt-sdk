@@ -1339,6 +1339,68 @@ await test("api: fallback chat HTML escapes model output (R12)", async () => {
 }
 
 // ---------------------------------------------------------------------------
+// FND-20261012-F0C: the API URL setting is checked before anything is sent
+// (sdk-portfolio R-BUT, Foundry module paragraph)
+// ---------------------------------------------------------------------------
+{
+  const fetchCalls = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    fetchCalls.push(url);
+    return new Response(JSON.stringify({ api_key: "sk_x", project_id: "p", key_prefix: "sk_x" }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  };
+  const warnings = [];
+  const realWarn = ui.notifications.warn;
+  ui.notifications.warn = (msg) => warnings.push(String(msg));
+
+  const { claimPairingCode } = await import(join(sdkRoot, "scripts/connect.mjs"));
+  const { reportIssue } = await import(join(sdkRoot, "scripts/api-client.mjs"));
+  const { checkApiUrl, _resetApiUrlWarnings } = await import(join(sdkRoot, "scripts/base-url.mjs"));
+
+  for (const bad of [
+    "http://evil.example",
+    "http://api.kitefrost.ai",
+    "https://api.kitefrost.ai@evil.example",
+    "http://127.evil.example",
+    "javascript:alert(1)",
+  ]) {
+    await test(`unsafe API URL is refused before sending: ${bad}`, async () => {
+      fetchCalls.length = 0;
+      await game.settings.set("kitefrost", "apiUrl", bad);
+      await game.settings.set("kitefrost", "apiKey", "sk_secret");
+      await game.settings.set("kitefrost", "projectId", "p1");
+      await assert.rejects(claimPairingCode("ABCD-EFGH"), /\[KiteFrost\]/);
+      await assert.rejects(reportIssue({ description: "x" }), /\[KiteFrost\]/);
+      assert.deepStrictEqual(fetchCalls, [], "nothing may be sent to an unsafe URL");
+    });
+  }
+
+  await test("loopback http and kitefrost.ai are accepted silently", () => {
+    _resetApiUrlWarnings();
+    warnings.length = 0;
+    for (const ok of ["http://localhost:8000", "http://127.0.0.1:9", "https://api.kitefrost.ai", "https://api-staging.kitefrost.ai"]) {
+      assert.doesNotThrow(() => checkApiUrl(ok), ok);
+    }
+    assert.deepStrictEqual(warnings, []);
+  });
+
+  await test("a foreign host warns once in Foundry, naming the real host", () => {
+    _resetApiUrlWarnings();
+    warnings.length = 0;
+    checkApiUrl("https://api.kitefrost.ai.evil.example");
+    checkApiUrl("https://api.kitefrost.ai.evil.example");
+    assert.strictEqual(warnings.length, 1);
+    assert.ok(warnings[0].includes("api.kitefrost.ai.evil.example"), warnings[0]);
+  });
+
+  globalThis.fetch = realFetch;
+  ui.notifications.warn = realWarn;
+}
+
+// ---------------------------------------------------------------------------
 // Summary
 // ---------------------------------------------------------------------------
 

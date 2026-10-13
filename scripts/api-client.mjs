@@ -14,6 +14,7 @@
  * @module api-client
  */
 
+import { checkApiUrl } from "./base-url.mjs";
 import { getSetting } from "./settings.mjs";
 
 /**
@@ -63,7 +64,7 @@ export async function generateDialogue(requestBody) {
   if (!apiKey) throw new Error("[KiteFrost] API Key is not configured. Check Module Settings.");
   if (!projectId) throw new Error("[KiteFrost] Project ID is not configured. Check Module Settings.");
 
-  const url = `${apiUrl}/v1/projects/${projectId}/quick-dialogue`;
+  const url = `${checkApiUrl(apiUrl)}/v1/projects/${projectId}/quick-dialogue`;
 
   let response;
   try {
@@ -129,7 +130,7 @@ export async function reportIssue(reportBody) {
   if (!apiKey) throw new Error("[KiteFrost] API Key is not configured. Check Module Settings.");
   if (!projectId) throw new Error("[KiteFrost] Project ID is not configured. Check Module Settings.");
 
-  const url = `${apiUrl}/v1/projects/${projectId}/feedback/report`;
+  const url = `${checkApiUrl(apiUrl)}/v1/projects/${projectId}/feedback/report`;
 
   let response;
   try {

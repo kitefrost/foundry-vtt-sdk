@@ -12,6 +12,7 @@
  * @module connect
  */
 
+import { checkApiUrl } from "./base-url.mjs";
 import { MODULE_ID, getSetting } from "./settings.mjs";
 
 /**
@@ -25,9 +26,10 @@ export async function claimPairingCode(code) {
   const apiUrl = getSetting("apiUrl")?.trim().replace(/\/+$/, "");
   if (!apiUrl) throw new Error("[KiteFrost] API URL is not configured. Check Module Settings.");
 
+  const base = checkApiUrl(apiUrl);
   let response;
   try {
-    response = await fetch(`${apiUrl}/v1/foundry/pair`, {
+    response = await fetch(`${base}/v1/foundry/pair`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code: trimmed }),
